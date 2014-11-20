@@ -13,10 +13,11 @@ public class TileGridPane extends Pane {
 	private int height;
 	private Tile[][] tList;
 	private DoubleBinding db;
+	private DoubleBinding db2;
 
 	public TileGridPane(int width, int height) {
 		this.width = width;
-		this.height = height;
+		this.height = height;		
 		Tile[][] tList = new Tile[this.width][this.height];
 		final ReadOnlyDoubleProperty widthProp = this.widthProperty();
 		db = new DoubleBinding() {
@@ -31,6 +32,13 @@ public class TileGridPane extends Pane {
 			ln.strokeWidthProperty().bind(db);
 			ln.setStartY(0);
 			ln.endYProperty().bind(this.heightProperty());
+			db2 = new DoubleBinding() {
+				
+				@Override
+				protected double computeValue() {
+					return 0;
+				}
+			};
 		}
 	}
 
