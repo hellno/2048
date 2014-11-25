@@ -191,6 +191,12 @@ public class RotatableIntArray2D implements Iterable<Integer> {
 				return v;
 			}
 
+			@Override
+			public void remove() {
+				// TODO Auto-generated method stub
+				
+			}
+
 		};
 	}
 
