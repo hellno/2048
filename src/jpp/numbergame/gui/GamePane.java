@@ -5,6 +5,7 @@ import java.util.List;
 import javafx.animation.FadeTransition;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Bounds;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -21,26 +22,40 @@ public class GamePane extends StackPane {
 
 	public GamePane(int width, int height) {
 		canvas = new TileGridPane(width, height);
+		
 		message = new Text();
 		message.setOpacity(0d);
 		message.setFill(Color.DARKRED);
 		message.setFont(new Font(20d));
+		
 		DropShadow ds = new DropShadow();
 		ds.setOffsetX(4.0f);
 		ds.setColor(Color.WHITE);
 		message.setEffect(ds);
-		ChangeListener ch = new ChangeListener() {
-
-			public void changed(ObservableValue arg0, Object arg1, Object arg2) {
-				// TODO Auto-generated method stub
-
+		
+		ChangeListener<Bounds> chLi = new ChangeListener<Bounds>() {
+			@Override
+			public void changed(
+					ObservableValue<? extends Bounds> target,
+					Bounds oldValue, Bounds newValue) {
+				
+				Bounds messageBounds = message.getBoundsInLocal();
+				Bounds canvasBounds = canvas.getBoundsInLocal();
+				double ratio = canvasBounds.getWidth() / messageBounds.getWidth();
+				
+				message.setScaleX(ratio);
+				message.setScaleY(ratio);
 			}
 		};
+		
 		ft = new FadeTransition(Duration.millis(1000), message);
 		ft.fromValueProperty().set(1d);
 		ft.toValueProperty().set(0d);
-		canvas.boundsInLocalProperty().addListener(ch);
-		message.boundsInLocalProperty().addListener(ch);
+		
+		canvas.boundsInLocalProperty().addListener(chLi);
+		message.boundsInLocalProperty().addListener(chLi);
+		
+		getChildren().addAll(canvas, message);
 	}
 
 	public void addTile(Tile t) {
@@ -69,5 +84,9 @@ public class GamePane extends StackPane {
 
 	public void fadeOutMessage() {
 		ft.play();
+	}
+	
+	public int getNumberOfTiles(){
+		return canvas.getChildren().size();
 	}
 }

@@ -8,37 +8,55 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.scene.text.TextBoundsType;
 import javafx.util.Duration;
 
 public class NumberRectangle extends StackPane {
-	private javafx.scene.shape.Rectangle rec = new javafx.scene.shape.Rectangle();
-	private javafx.beans.property.IntegerProperty inital;
-	private javafx.scene.text.Text text;
-	private javafx.beans.property.DoubleProperty xProperty;
-	private javafx.beans.property.DoubleProperty yProperty;
-	private javafx.beans.property.DoubleProperty width;
-	private javafx.beans.property.DoubleProperty height;
-	private Timeline timeline;
+	private Rectangle rec = new Rectangle();
+	
+	private IntegerProperty inital = new SimpleIntegerProperty();
+	private Text text = new Text();
+	
+	private DoubleProperty xProperty = new SimpleDoubleProperty();
+	private DoubleProperty yProperty = new SimpleDoubleProperty();
+	
+	private DoubleProperty width = new SimpleDoubleProperty();
+	private DoubleProperty height = new SimpleDoubleProperty();
+	
+	private Timeline timeline = new Timeline();
+	
 	private DoubleProperty recWidth;
 	private DoubleProperty recHeight;
 
 	public NumberRectangle(int x, int y, int initialValue) {
+		
+		//System.out.println("init NumberRectangle, params: x=" + x + " y=" + y + " initVal=" + initialValue);
+		
 		this.xProperty.set(x);
 		this.yProperty.set(y);
+		
 		this.inital.set(initialValue);
+		
 		Insets ins = new Insets(5, 5, 5, 5);
 		this.setPadding(ins);
+		
 		this.rec.setArcHeight(10);
 		this.rec.setArcWidth(10);
+		
 		this.text.setBoundsType(TextBoundsType.VISUAL);
 		this.text.setFill(Color.WHITE);
 		this.text.setFont(Font.font("Verdana", 20.0));
@@ -47,6 +65,7 @@ public class NumberRectangle extends StackPane {
 		is.setOffsetY(4.0f);
 		is.setColor(Color.BLACK);
 		this.text.setEffect(is);
+		
 		this.inital.addListener(new ChangeListener<Number>() {
 			@Override
 			public void changed(ObservableValue<? extends Number> o,
@@ -54,6 +73,7 @@ public class NumberRectangle extends StackPane {
 				text.setText(newVal.toString());
 			}
 		});
+		
 		this.inital.addListener(new ChangeListener<Number>() {
 			@Override
 			public void changed(ObservableValue<? extends Number> arg0,
@@ -69,6 +89,7 @@ public class NumberRectangle extends StackPane {
 						Color.PALEGOLDENROD, interpol));
 			}
 		});
+		
 		this.text.textProperty().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> arg0,
@@ -90,20 +111,28 @@ public class NumberRectangle extends StackPane {
 						yProperty.set(yProperty.doubleValue() * scale);
 					}
 				});
-		this.rec.setHeight(height.doubleValue() - 2 * 5);
-		this.rec.setWidth(width.doubleValue() - 2 * 5);
+		
+		
+//		this.rec.setHeight(height.doubleValue() - 2 * 5);
+//		this.rec.setWidth(width.doubleValue() - 2 * 5);
+	
+		rec.widthProperty().bind(width.subtract(5 * 2));
+		rec.heightProperty().bind(height.subtract(5 * 2));
+
+		
+		getChildren().addAll(new Node[] { this.rec, this.text });
 	}
 
 	public void moveTo(int x, int y) {
-		List<KeyFrame> kflist = new ArrayList<KeyFrame>();
 		KeyValue xk = new KeyValue(this.xProperty, x);
 		KeyValue yk = new KeyValue(this.yProperty, y);
 		KeyFrame kf = new KeyFrame(Duration.millis(150), xk, yk);
-		for (KeyFrame kft : timeline.getKeyFrames()) {
-			kflist.add(kft);
-		}
-		kflist.clear();
-		timeline.getKeyFrames().add(kf);
+		
+		List<KeyFrame> frames = timeline.getKeyFrames();
+		
+		frames.clear();
+		frames.add(kf);
+		
 		timeline.playFromStart();
 	}
 
@@ -120,6 +149,10 @@ public class NumberRectangle extends StackPane {
 
 	public int getValue() {
 		return inital.get();
+	}
+	
+	public void setValue(int val){
+		inital.setValue(val);
 	}
 
 	public double getY() {
