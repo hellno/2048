@@ -4,30 +4,26 @@ import java.util.List;
 
 import javafx.animation.FadeTransition;
 import javafx.beans.binding.DoubleBinding;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.util.Duration;
-import jpp.numbergame.Coordinate2D;
-import jpp.numbergame.Move;
-import jpp.numbergame.Tile;
+import jpp.numbergame.*;
 
 public class TileGridPane extends Pane {
 
 	private int width;
 	private int height;
-	private NumberRectangle[][] tList;
-	private DoubleBinding db2;
+
+	private NumberRectangle[][] tiles;
 
 	public TileGridPane(int width, int height) {
-		
 		this.width = width;
 		this.height = height;
+		tiles = new NumberRectangle[width][height];
 		
-		tList = new NumberRectangle[width][height];
 		DoubleBinding strokeWidth = widthProperty().divide(400).add(1);
+		
 		for(int x = 1; x < width; x++) {
 			Line gridline = new Line();
 			gridline.setStroke(Color.GRAY);
@@ -57,82 +53,66 @@ public class TileGridPane extends Pane {
 		}
 	}
 
-	public void addRectangle(Tile tile) {
-		this.addRectangle(tile.getValue(), tile.getCoordinate().getX(), tile
-				.getCoordinate().getY());
+	public void addRectangle(Tile t) {
+		addRectangle(t.getValue(), t.getCoordinate().getX(), t.getCoordinate().getY());
 	}
 
-	public void addRectangle(int value, int x, int y) {
-		
-		if (this.tList[x][y] != null) {
+	public void addRectangle(int v, int x, int y) {
+		if (tiles[x][y] != null) {
 			throw new IllegalArgumentException(String.format(
-					"tile %d,%d already exists", x, y));
+					"Tile at (%d,%d) already exists", x, y));
 		}
-		
-		NumberRectangle ner = new NumberRectangle(x, y, value);
-		
-		this.getChildren().add(ner);
-		this.tList[x][y] = ner;
-		
-		
-	}
 
-	public DoubleBinding tileWidthBinding() {
-		final ReadOnlyDoubleProperty widthProp = this.widthProperty();
-		final int xvalue = this.width;
-		DoubleBinding db = new DoubleBinding() {
-			@Override
-			protected double computeValue() {
-				return widthProp.doubleValue() / xvalue;
-			}
-		};
-		return db;
-	}
+		NumberRectangle rect = new NumberRectangle(x, y, v);
 
-	public DoubleBinding tileHeightBinding() {
-		final ReadOnlyDoubleProperty heightProp = this.heightProperty();
-		final int yvalue = this.height;
-		DoubleBinding db = new DoubleBinding() {
-			@Override
-			protected double computeValue() {
-				return heightProp.doubleValue() / yvalue;
-			}
-		};
-		return db;
+		rect.rectWidthProperty().bind(tileWidthBinding());
+		rect.rectHeightProperty().bind(tileHeightBinding());
+
+		rect.layoutXProperty().bind(tileWidthBinding().multiply(rect.xProperty()));
+		rect.layoutYProperty().bind(tileHeightBinding().multiply(rect.yProperty()));
+
+		getChildren().add(rect);
+		tiles[x][y] = rect;
 	}
 
 	public void moveRectangles(List<Move> moves) {
-		for (Move m : moves) {
-			moveRectangle(m);
+		for (Move move : moves) {
+			moveRectangle(move);
 		}
 	}
 
 	public void moveRectangle(Move move) {
-		
-		NumberRectangle movedRect = tList[move.getFrom().getX()][move.getFrom().getY()];
+		NumberRectangle movedRect = tiles[move.getFrom().getX()][move.getFrom().getY()];
 		movedRect.moveTo(move.getTo().getX(), move.getTo().getY());
 
 		if (move.isMerge()) {
-			NumberRectangle oldRect = tList[move.getTo().getX()][move.getTo().getY()];
-			FadeTransition ft = new FadeTransition(Duration.millis(150), oldRect);
-			ft.setFromValue(1d);
-			ft.setToValue(0d);
-			ft.play();
-			getChildren().remove(oldRect);
-			movedRect.setValue(move.getNewValue());
+			//move tiles around
+			NumberRectangle tempRect = tiles[move.getTo().getX()][move.getTo().getY()];
+			FadeTransition fadeTransition = new FadeTransition(Duration.millis(150), tempRect);
+			fadeTransition.setFromValue(1d);
+			fadeTransition.setToValue(0d);
+			fadeTransition.play();
+			getChildren().remove(tempRect);
 			
-			System.out.println("merging two tiles");
+			movedRect.setValue(move.getNewValue());
 		}
-		
-		tList[move.getTo().getX()][move.getTo().getY()] = movedRect;
-		tList[move.getFrom().getX()][move.getFrom().getY()] = null;
+		tiles[move.getTo().getX()][move.getTo().getY()] = movedRect;
+		tiles[move.getFrom().getX()][move.getFrom().getY()] = null;
 	}
-	
+
+	public DoubleBinding tileWidthBinding() {
+		return widthProperty().divide(width);
+	}
+
+	public DoubleBinding tileHeightBinding() {
+		return heightProperty().divide(height);
+	}
+
 	public void reset() {
-		for(int x = 0; x < tList.length; x++) {
-			for(int y = 0; y < tList[x].length; y++) {
-				getChildren().remove(tList[x][y]);
-				tList[x][y] = null;
+		for(int x = 0; x < tiles.length; x++) {
+			for(int y = 0; y < tiles[x].length; y++) {
+				getChildren().remove(tiles[x][y]);
+				tiles[x][y] = null;
 			}
 		}
 	}
